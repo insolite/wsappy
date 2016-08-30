@@ -6,7 +6,7 @@ install_reqs = parse_requirements('requirements.txt', session=False)
 requirements = [str(ir.req) for ir in install_reqs]
 
 setup(
-    name='WsAppy',
+    name='wsappy',
     version='0.1.0',
     description='A bit more higher level of asyncio websocket server',
     classifiers=[

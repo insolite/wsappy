@@ -36,6 +36,6 @@ class Server():
         client.on_disconnected()
 
     @asyncio.coroutine
-    def run(self, host, port):
-        server = websockets.serve(self.on_connect, host, port)
+    def run(self, host, port, *args, **kwargs):
+        server = websockets.serve(self.on_connect, host, port, *args, **kwargs)
         yield from server
