@@ -8,9 +8,10 @@ class Client():
         self.connection = connection
 
     @asyncio.coroutine
-    def send_message(self, request_id, module, event, **data):
+    def send_message(self, request_id, module, method, event, **data):
         raw_message = json.dumps({'request_id': request_id,
                                   'module': module,
+                                  'method': method,
                                   'event': event,
                                   'data': data})
         yield from self.connection.send(raw_message)

@@ -7,7 +7,8 @@ import websockets
 
 class Server():
 
-    def __init__(self, client_factories, handlers={}):
+    def __init__(self, request_factory, client_factories, handlers={}):
+        self.request_factory = request_factory
         self.client_factories = client_factories
         self.handlers = handlers
         self.clients = []
@@ -24,11 +25,17 @@ class Server():
                 break
             try:
                 message_obj = json.loads(raw_message)
-                handler = self.handlers[message_obj['module']]
-                method = getattr(handler, message_obj['method'])
-                request_id = message_obj.get('request_id')
+                module_name = message_obj['module']
+                handler = self.handlers[module_name]
+                method_name = message_obj['method']
+                method = getattr(handler, method_name)
                 if getattr(method, '_is_handler_method', False):
-                    asyncio.async(method(client, request_id, **message_obj.get('data', {})))
+                    request_id = message_obj.get('request_id')
+                    data = message_obj.get('data', {})
+                    request = self.request_factory(module_name, method_name,
+                                                   message_obj, client,
+                                                   request_id)
+                    asyncio.async(method(request, **data))
                 else:
                     raise PermissionError
             except:
