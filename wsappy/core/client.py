@@ -2,7 +2,7 @@ import asyncio
 import json
 
 
-class Client():
+class Client:
 
     def __init__(self, connection):
         self.connection = connection
@@ -16,8 +16,10 @@ class Client():
                                   'data': data})
         yield from self.connection.send(raw_message)
 
+    @asyncio.coroutine
     def on_connected(self):
         pass
 
+    @asyncio.coroutine
     def on_disconnected(self):
         pass

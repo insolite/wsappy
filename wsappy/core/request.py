@@ -12,4 +12,5 @@ class Request:
 
     @asyncio.coroutine
     def response(self, event, **data):
-        yield from self.client.send_message(self.id, self.module, self.method, event, **data)
+        yield from self.client.send_message(self.id, self.module, self.method,
+                                            event, **data)
