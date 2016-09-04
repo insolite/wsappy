@@ -1,2 +1,4 @@
 websockets
 asynctest
+Sphinx
+sphinx_rtd_theme
