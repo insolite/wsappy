@@ -10,12 +10,13 @@ import json
 class Client:
     """Connection wrapper"""
 
-    def __init__(self, connection):
+    def __init__(self, server, connection):
         """
         Init client
 
         :param connection: `websockets` connection descriptor
         """
+        self.server = server
         self.connection = connection
 
     @asyncio.coroutine
@@ -29,12 +30,11 @@ class Client:
         :param event: Event
         :param data: Data
         """
-        raw_message = json.dumps({'request_id': request_id,
-                                  'module': module,
-                                  'method': method,
-                                  'event': event,
-                                  'data': data})
-        yield from self.connection.send(raw_message)
+        yield from self.server.send_message({'request_id': request_id,
+                                             'module': module,
+                                             'method': method,
+                                             'event': event,
+                                             'data': data}, self.connection)
 
     @asyncio.coroutine
     def on_connected(self):

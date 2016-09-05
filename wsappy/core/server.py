@@ -14,11 +14,23 @@ from .utils import HANDLER_FLAG
 class Server:
     """Server"""
 
-    def __init__(self, request_factory, client_factories, handlers):
-        """Init server"""
+    def __init__(self, request_factory, client_factories, handlers,
+                 json_encoder=json.JSONEncoder,
+                 json_decoder=json.JSONDecoder):
+        """
+        Init server
+
+        :param request_factory: Request class
+        :param client_factories: Router configuration
+        :param handlers: Handler configuration
+        :param json_encoder: JSONEncoder
+        :param json_decoder: JSONDecoder
+        """
         self.request_factory = request_factory
         self.client_factories = client_factories
         self.handlers = handlers
+        self.json_encoder = json_encoder
+        self.json_decoder = json_decoder
 
     @asyncio.coroutine
     def process_message(self, raw_message, client):
@@ -30,7 +42,7 @@ class Server:
         :param raw_message: Valid JSON string
         :param client: Client
         """
-        message_obj = json.loads(raw_message)
+        message_obj = json.loads(raw_message, cls=self.json_decoder)
         module_name = message_obj['module']
         handler = self.handlers[module_name]
         method_name = message_obj['method']
@@ -56,7 +68,7 @@ class Server:
         :param connection: Instance of :class:`websockets.WebSocketServerProtocol`
         :param path: URI
         """
-        client = self.client_factories[path.strip('/')](connection)
+        client = self.client_factories[path.strip('/')](self, connection)
         yield from client.on_connected()
         while True:
             try:
@@ -65,6 +77,17 @@ class Server:
                 break
             asyncio.async(self.process_message(raw_message, client))
         yield from client.on_disconnected()
+
+    @asyncio.coroutine
+    def send_message(self, data, connection):
+        """
+        Send message to client's connection
+
+        :param data: Data
+        :param connection: `websockets` connection descriptor
+        """
+        message = json.dumps(data, cls=self.json_encoder)
+        yield from connection.send(message)
 
     @asyncio.coroutine
     def run(self, host, port, *args, **kwargs):

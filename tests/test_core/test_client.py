@@ -10,8 +10,9 @@ class ClientTest(WsAppyTest):
 
     def setUp(self):
         super().setUp()
+        self.server = CoroutineMock()
         self.connection = CoroutineMock()
-        self.client = Client(self.connection)
+        self.client = Client(self.server, self.connection)
 
     def test_send_message(self):
         request_id = 42
@@ -24,12 +25,13 @@ class ClientTest(WsAppyTest):
             self.client.send_message(request_id, module, method, event, **data)
         )
 
-        self.connection.send.assert_called_once_with(
-            json.dumps({'request_id': request_id,
-                        'module': module,
-                        'method': method,
-                        'event': event,
-                        'data': data})
+        self.server.send_message.assert_called_once_with(
+            {'request_id': request_id,
+             'module': module,
+             'method': method,
+             'event': event,
+             'data': data},
+            self.connection
         )
 
     def test_on_connected(self):

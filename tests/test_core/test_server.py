@@ -84,7 +84,7 @@ class ServerTest(WsAppyTest):
 
         self.loop.run_until_complete(self.server.on_connect(connection, path))
 
-        self.client_factory.assert_called_once_with(connection)
+        self.client_factory.assert_called_once_with(self.server, connection)
         client = self.client_factory()
         client.on_connected.assert_called_once_with()
         client.on_disconnected.assert_called_once_with()
@@ -92,6 +92,19 @@ class ServerTest(WsAppyTest):
             [call(message, client) for message in messages],
             any_order=False
         )
+
+    def test_send_message(self):
+        data = {'some': 'args'}
+        data_text = json.dumps(data)
+        connection = CoroutineMock()
+        # self.server.json_encoder = MagicMock()
+        # self.server.json_encoder().encode = MagicMock(return_value=data_text)
+
+        self.loop.run_until_complete(
+            self.server.send_message(data, connection)
+        )
+
+        connection.send.assert_called_once_with(data_text)
 
     def test_run(self):
         host = 'foo'
