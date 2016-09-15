@@ -68,7 +68,8 @@ class Server:
         :param connection: Instance of :class:`websockets.WebSocketServerProtocol`
         :param path: URI
         """
-        client = self.client_factories[path.strip('/')](self, connection)
+        client_name = path.split('?', 1)[0].strip('/')
+        client = self.client_factories[client_name](self, connection)
         yield from client.on_connected()
         while True:
             try:
