@@ -5,7 +5,6 @@ from asynctest.mock import CoroutineMock, call
 import websockets
 
 from wsappy.core.server import Server
-from wsappy.core.utils import HANDLER_FLAG
 import wsappy.core.server
 from tests.common import WsAppyTest
 
@@ -17,27 +16,21 @@ class ServerTest(WsAppyTest):
         self.request_factory = MagicMock()
         self.client_name = 'client'
         self.client_factory = MagicMock()
-        self.client_factories = {
-            self.client_name: self.client_factory,
-        }
         self.handler_name = 'foo'
         self.handler = MagicMock()
-        self.handlers = {
-            self.handler_name: self.handler
+        self.handlers = {self.handler_name: self.handler}
+        self.client_factories = {
+            self.client_name: (self.client_factory, self.handlers),
         }
         self.server = Server(self.request_factory,
-                             self.client_factories,
-                             self.handlers)
+                             self.client_factories)
 
-    def test_process_message__called(self):
+    def test_process_message(self):
         request_id = 42
         module_name = self.handler_name
         method_name = 'bar'
         data = {'some': 'args'}
         client = MagicMock()
-        method = MagicMock()
-        setattr(method, HANDLER_FLAG, True)
-        setattr(self.handler, method_name, method)
         raw_message = json.dumps({'request_id': request_id,
                                   'module': module_name,
                                   'method': method_name,
@@ -49,28 +42,7 @@ class ServerTest(WsAppyTest):
 
         self.request_factory.assert_called_once_with(module_name, method_name,
                                                      data, client, request_id)
-        method.assert_called_once_with(self.request_factory(), **data)
-
-    def test_process_message__not_handler(self):
-        request_id = 42
-        module_name = self.handler_name
-        method_name = 'bar'
-        data = {'some': 'args'}
-        client = MagicMock()
-        method = MagicMock()
-        setattr(method, HANDLER_FLAG, False)
-        setattr(self.handler, method_name, method)
-        raw_message = json.dumps({'request_id': request_id,
-                                  'module': module_name,
-                                  'method': method_name,
-                                  'data': data})
-
-        self.assertRaises(PermissionError,
-                          self.loop.run_until_complete,
-                          self.server.process_message(raw_message, client))
-
-        self.request_factory.assert_not_called()
-        method.assert_not_called()
+        client.process_message.assert_called_once_with(self.request_factory())
 
     def test_on_connect(self):
         connection = MagicMock()
@@ -84,7 +56,9 @@ class ServerTest(WsAppyTest):
 
         self.loop.run_until_complete(self.server.on_connect(connection, path))
 
-        self.client_factory.assert_called_once_with(self.server, connection)
+        self.client_factory.assert_called_once_with(self.server,
+                                                    connection,
+                                                    self.handlers)
         client = self.client_factory()
         client.on_connected.assert_called_once_with()
         client.on_disconnected.assert_called_once_with()

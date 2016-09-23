@@ -8,13 +8,11 @@ import json
 
 import websockets
 
-from .utils import HANDLER_FLAG
-
 
 class Server:
     """Server"""
 
-    def __init__(self, request_factory, client_factories, handlers,
+    def __init__(self, request_factory, client_factories,
                  json_encoder=json.JSONEncoder,
                  json_decoder=json.JSONDecoder):
         """
@@ -22,13 +20,11 @@ class Server:
 
         :param request_factory: Request class
         :param client_factories: Router configuration
-        :param handlers: Handler configuration
         :param json_encoder: JSONEncoder
         :param json_decoder: JSONDecoder
         """
         self.request_factory = request_factory
         self.client_factories = client_factories
-        self.handlers = handlers
         self.json_encoder = json_encoder
         self.json_decoder = json_decoder
 
@@ -44,17 +40,12 @@ class Server:
         """
         message_obj = json.loads(raw_message, cls=self.json_decoder)
         module_name = message_obj['module']
-        handler = self.handlers[module_name]
         method_name = message_obj['method']
-        method = getattr(handler, method_name)
-        if getattr(method, HANDLER_FLAG, False):
-            request_id = message_obj.get('request_id')
-            data = message_obj.get('data', {})
-            request = self.request_factory(module_name, method_name, data,
-                                           client, request_id)
-            yield from method(request, **data)
-        else:
-            raise PermissionError
+        data = message_obj.get('data', {})
+        request_id = message_obj.get('request_id')
+        request = self.request_factory(module_name, method_name, data,
+                                       client, request_id)
+        yield from client.process_message(request)
 
     @asyncio.coroutine
     def on_connect(self, connection, path):
@@ -69,7 +60,8 @@ class Server:
         :param path: URI
         """
         client_name = path.split('?', 1)[0].strip('/')
-        client = self.client_factories[client_name](self, connection)
+        client_factory, handlers = self.client_factories[client_name]
+        client = client_factory(self, connection, handlers)
         yield from client.on_connected()
         while True:
             try:

@@ -18,9 +18,8 @@ class EntityHandler(Handler):
 
 
 def main():
-    client_factories = {'api': Client}
-    handlers = {'entity': EntityHandler()}
-    server = Server(Request, client_factories, handlers)
+    client_factories = {'api': (Client, {'entity': EntityHandler()})}
+    server = Server(Request, client_factories)
     loop = asyncio.get_event_loop()
     loop.run_until_complete(server.run('localhost', 8008))
     try:
