@@ -80,15 +80,15 @@ class Server:
         yield from client.on_disconnected()
 
     @asyncio.coroutine
-    def send_message(self, data, connection):
+    def send_message(self, data, client):
         """
         Send message to client's connection
 
         :param data: Data
-        :param connection: `websockets` connection descriptor
+        :param client: Client
         """
         message = json.dumps(data, cls=self.json_encoder)
-        yield from connection.send(message)
+        yield from client.connection.send(message)
 
     @asyncio.coroutine
     def run(self, host, port, *args, **kwargs):

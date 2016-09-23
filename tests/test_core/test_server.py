@@ -96,15 +96,15 @@ class ServerTest(WsAppyTest):
     def test_send_message(self):
         data = {'some': 'args'}
         data_text = json.dumps(data)
-        connection = CoroutineMock()
+        client = CoroutineMock()
         # self.server.json_encoder = MagicMock()
         # self.server.json_encoder().encode = MagicMock(return_value=data_text)
 
         self.loop.run_until_complete(
-            self.server.send_message(data, connection)
+            self.server.send_message(data, client)
         )
 
-        connection.send.assert_called_once_with(data_text)
+        client.connection.send.assert_called_once_with(data_text)
 
     def test_run(self):
         host = 'foo'
