@@ -1,1 +1,2 @@
 recursive-include wsappy *.py
+include requirements.txt
