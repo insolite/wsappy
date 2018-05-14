@@ -1,11 +1,8 @@
 import re
 import os
 from setuptools import setup
-from pip.req import parse_requirements
 
 
-install_reqs = parse_requirements('requirements.txt', session=False)
-requirements = [str(ir.req) for ir in install_reqs]
 package_name = 'wsappy'
 hyphen_package_name = package_name.replace('_', '-')
 
@@ -37,5 +34,7 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5'],
-    install_requires=requirements,
+    install_requires=[
+        'websockets>=4.0',
+    ],
 )
